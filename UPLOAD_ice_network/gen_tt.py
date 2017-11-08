@@ -33,7 +33,7 @@ class IndexedMatrix():
     Store entities and their respective representations.
     """
 
-    def __init__(self, items, rep_matrix):
+    def __init__(self, items, embd_matrix):
         """ Constructor for IndexedMatrix.
         Param:
             param1 [self] reference to this object.
@@ -41,7 +41,7 @@ class IndexedMatrix():
             param3 [list] of lists of item-associated repr.
         """
         self.items = np.array(list(items)) # set will cause error later
-        self.rep_matrix = np.array(rep_matrix).astype(np.float32)
+        self.embd_matrix = np.array(embd_matrix).astype(np.float32)
 
 def gen_indexed_matrix(words, rep_dict):
     """ Construct an IndexedMatrix object.
@@ -51,8 +51,8 @@ def gen_indexed_matrix(words, rep_dict):
     Return:
         return1 [IndexedMatrix] object.
     """
-    rep_matrix = [rep_dict[word] for word in words]
-    return IndexedMatrix(words, rep_matrix)
+    embd_matrix = [rep_dict[word] for word in words]
+    return IndexedMatrix(words, embd_matrix)
 
 def load_rep_word(et_rel_path):
     """ Load a list of unique representative words from ET relation.
@@ -95,33 +95,34 @@ def load_word_embd(word_embd_path):
 def gen_tt_relation(tt_path, rep_word_set, word_embd_dict, expk, weighted):
     """ Generate and save TT relation.
     Param:
-        param2 [string] path to save TT relation.
-        param3 [set] of representative words.
-        param4 [dict] where key=word & val=word embeddings.
-        param5 [int] number of expanded words to pick per keyword.
-        param6 [int] indicator of whether to use binary or loaded weights.
+        param1 [string] path to save TT relation.
+        param2 [set] of representative words.
+        param3 [dict] where key=word & val=word embeddings.
+        param4 [int] number of expanded words to pick per keyword.
+        param5 [int] indicator of whether to use binary or loaded weights.
     """
     tt_relation = set() # remove duplicates
 
     # Step 1: Find the cosine distance between every pair of word embeddings.
-    mat = gen_indexed_matrix(rep_word_set, word_embd_dict)
-    cos_mat = pairwise_distances(mat.rep_matrix, mat.rep_matrix, "cosine")
+    rep_mat = gen_indexed_matrix(rep_word_set, word_embd_dict)
+    exp_mat = gen_indexed_matrix(list(word_embd_dict.keys()), word_embd_dict)
+    cos_mat = pairwise_distances(rep_mat.embd_matrix, exp_mat.embd_matrix, "cosine")
 
     # Step 2: Find expansion words for every representative word.
     if weighted:
-        for rep_idx in tqdm(range(len(mat.items))):
+        for rep_idx in tqdm(range(len(rep_mat.items))):
             exp_idx_list = cos_mat[rep_idx].argsort()[1:expk+1] # exclude rep word
             for exp_idx in exp_idx_list:
                 # Convert cos distance to similarity then shift and rescale.
                 #   1) Shift from [-1,1] to [0,2] to ensure positiveness.
                 #   2) Normalize to [0,1] to resemble probability.
                 sim = str(1-cos_mat[rep_idx][exp_idx]/2) # cos sim = 1-cos dist
-                tt_relation.add(mat.items[rep_idx]+" "+mat.items[exp_idx]+" "+sim)
+                tt_relation.add(rep_mat.items[rep_idx]+" "+exp_mat.items[exp_idx]+" "+sim)
     else:
-        for rep_idx in tqdm(range(len(mat.items))):
+        for rep_idx in tqdm(range(len(rep_mat.items))):
             exp_idx_list = cos_mat[rep_idx].argsort()[1:expk+1] # exclude rep word
             for exp_idx in exp_idx_list:
-                tt_relation.add(mat.items[rep_idx]+" "+mat.items[exp_idx]+" 1.0")
+                tt_relation.add(rep_mat.items[rep_idx]+" "+exp_mat.items[exp_idx]+" 1.0")
 
     # Step 3: Save TT relation.
     with open(tt_path, "w") as f:
