@@ -43,7 +43,7 @@ class IndexedMatrix():
         self.items = np.array(list(items)) # set will cause error later
         self.embd_matrix = np.array(embd_matrix).astype(np.float32)
 
-def gen_indexed_matrix(words, rep_dict):
+def gen_indexed_matrix(words, embd_dict):
     """ Construct an IndexedMatrix object.
     Param:
         param1 [set] of 1-hot string entities.
@@ -51,7 +51,8 @@ def gen_indexed_matrix(words, rep_dict):
     Return:
         return1 [IndexedMatrix] object.
     """
-    embd_matrix = [rep_dict[word] for word in words]
+    embd_matrix = [embd_dict[word] for word in words]
+    
     return IndexedMatrix(words, embd_matrix)
 
 def load_rep_word(et_rel_path):
@@ -105,7 +106,8 @@ def gen_tt_relation(tt_path, rep_word_set, word_embd_dict, expk, weighted):
 
     # Step 1: Find the cosine distance between every pair of word embeddings.
     rep_mat = gen_indexed_matrix(rep_word_set, word_embd_dict)
-    exp_mat = gen_indexed_matrix(list(word_embd_dict.keys()), word_embd_dict)
+    #exp_mat = gen_indexed_matrix(list(word_embd_dict.keys()), word_embd_dict)
+    exp_mat = rep_mat
     cos_mat = pairwise_distances(rep_mat.embd_matrix, exp_mat.embd_matrix, "cosine")
 
     # Step 2: Find expansion words for every representative word.

@@ -100,8 +100,9 @@ def gen_tt_network(tt_path):
         param1 [string] path to an edge list file where text-text relations are
             defined.
     Return:
-        return [dict] where key=rep word & val=list of 2-tuples of exp word and
+        return1 [dict] where key=rep word & val=list of 2-tuples of exp word and
             respective weight.
+        return2 [list] of unique words used in TT relation.
     """
     tt_dict = defaultdict(set)
     word_set = set()
@@ -111,8 +112,8 @@ def gen_tt_network(tt_path):
             entry = line.split()
             tt_dict[entry[0]].add((entry[1], float(entry[2]))) # undirected
             tt_dict[entry[1]].add((entry[0], float(entry[2])))
-            tt_dict[entry[0]].add((entry[0], float(1))) # cos similarity to self
-            tt_dict[entry[1]].add((entry[1], float(1)))
+            tt_dict[entry[0]].add((entry[0], 1.0)) # cos similarity to self
+            tt_dict[entry[1]].add((entry[1], 1.0))
             word_set.update([entry[0], entry[1]])
 
     return tt_dict, list(word_set)
