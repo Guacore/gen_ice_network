@@ -106,8 +106,7 @@ def gen_tt_relation(tt_path, rep_word_set, word_embd_dict, expk, weighted):
 
     # Step 1: Find the cosine distance between every pair of word embeddings.
     rep_mat = gen_indexed_matrix(rep_word_set, word_embd_dict)
-    #exp_mat = gen_indexed_matrix(list(word_embd_dict.keys()), word_embd_dict)
-    exp_mat = rep_mat
+    exp_mat = gen_indexed_matrix(list(word_embd_dict.keys()), word_embd_dict)
     cos_mat = pairwise_distances(rep_mat.embd_matrix, exp_mat.embd_matrix, "cosine")
 
     # Step 2: Find expansion words for every representative word.
